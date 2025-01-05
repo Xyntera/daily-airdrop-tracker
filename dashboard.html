@@ -40,25 +40,36 @@
         <small><a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a></small>
     </footer>
 
-    <script>
-        const tableBody = document.querySelector('#airdropTable tbody');
-        const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
+<script>
+    const tableBody = document.querySelector('#airdropTable tbody');
+    const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
 
-        tasks.forEach(({ name, link }) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${name}</td>
-                <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
-                <td><button onclick="markDone(this)">Done</button></td>
-            `;
-            tableBody.appendChild(row);
-        });
+    tasks.forEach(({ name, link, isDone }) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${name}</td>
+            <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
+            <td><button onclick="markDone(this)" ${isDone ? 'disabled' : ''} style="${isDone ? 'text-decoration: line-through;' : ''}">Done</button></td>
+        `;
+        tableBody.appendChild(row);
+    });
 
-        function markDone(button) {
-            const row = button.closest('tr');
-            row.style.textDecoration = 'line-through';
-            button.disabled = true;
+    function markDone(button) {
+        const row = button.closest('tr');
+        const taskName = row.querySelector('td').textContent;
+
+        // Update the task status in the localStorage
+        const taskIndex = tasks.findIndex(task => task.name === taskName);
+        if (taskIndex !== -1) {
+            tasks[taskIndex].isDone = true;
+            localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
         }
-    </script>
+
+        // Mark the task as done on the UI
+        row.style.textDecoration = 'line-through';
+        button.disabled = true;
+    }
+</script>
+
 </body>
 </html>
