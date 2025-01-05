@@ -1,4 +1,3 @@
-<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,20 +5,175 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard - Daily Airdrop Tracker</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Courier New', monospace;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            position: relative;
+        }
+
+        /* Table Styles */
+        #airdropTable {
+            opacity: 0;
+            animation: fadeIn 1s forwards, rainEffect 0.5s linear infinite;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Header 3D Effect */
+        th {
+            position: relative;
+            padding: 10px;
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #00ff00;
+            background-color: #1f1f1f;
+            border: 1px solid #444;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        th:hover {
+            transform: rotateX(10deg) rotateY(10deg);
+            color: #ffcc00;
+        }
+
+        /* Button Styles */
+        .button, .button-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: transparent;
+            color: #00ff00;
+            text-transform: uppercase;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 255, 0, 0.3);
+            text-align: center;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button:hover {
+            background-color: #00ff00;
+            color: black;
+            box-shadow: 0 8px 16px rgba(0, 255, 0, 0.6);
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        /* Links Animation */
+        a {
+            color: #00ff00;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #00cc00;
+        }
+
+        /* Rain Effect */
+        @keyframes rainEffect {
+            0% {
+                top: -10px;
+                left: 10%;
+            }
+            100% {
+                top: 100%;
+                left: 10%;
+            }
+        }
+
+        .rain {
+            position: absolute;
+            top: -10px;
+            left: 10%;
+            width: 2px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            animation: rainEffect 2s linear infinite;
+            opacity: 0.5;
+            z-index: 1;
+        }
+
+        .rain:nth-child(odd) {
+            animation-duration: 2.5s;
+            left: 30%;
+        }
+
+        .rain:nth-child(even) {
+            animation-duration: 3s;
+            left: 50%;
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid transparent;
+            border-top: 3px solid #00ff00;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Hide Loading Spinner */
+        .button.loading .loading {
+            display: block;
+        }
+
+    </style>
 </head>
 <body>
+
+    <!-- Rain Effect Elements -->
+    <div class="rain"></div>
+    <div class="rain"></div>
+    <div class="rain"></div>
+    <div class="rain"></div>
+    <div class="rain"></div>
+
     <nav class="container-fluid">
         <ul>
             <li><strong>Daily Airdrop Tracker</strong></li>
         </ul>
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="features.html">Features</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="contact.html" role="button">Contact</a></li>
+            <li><a href="index.html" class="button button-home" onclick="showLoading(this)">Home</a></li>
+            <li><a href="features.html" class="button button-features" onclick="showLoading(this)">Features</a></li>
+            <li><a href="dashboard.html" class="button button-dashboard" onclick="showLoading(this)">Dashboard</a></li>
+            <li><a href="about.html" class="button button-about" onclick="showLoading(this)">About</a></li>
+            <li><a href="contact.html" class="button button-contact" onclick="showLoading(this)">Contact</a></li>
         </ul>
     </nav>
+
     <main class="container">
         <h1>Dashboard</h1>
         <table role="grid" id="airdropTable">
@@ -36,40 +190,57 @@
         </table>
         <a href="add-task.html" class="button">Add New Task</a>
     </main>
+
     <footer class="container">
-        <small><a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a></small>
+        <small><a href="#" >Privacy Policy</a> • <a href="#" >Terms of Service</a></small>
     </footer>
 
-<script>
-    const tableBody = document.querySelector('#airdropTable tbody');
-    const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
+    <script>
+        const tableBody = document.querySelector('#airdropTable tbody');
+        const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
 
-    tasks.forEach(({ name, link, isDone }) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${name}</td>
-            <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
-            <td><button onclick="markDone(this)" ${isDone ? 'disabled' : ''} style="${isDone ? 'text-decoration: line-through;' : ''}">Done</button></td>
-        `;
-        tableBody.appendChild(row);
-    });
+        tasks.forEach(({ name, link, isDone }) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
+                <td><button onclick="markDone(this)" ${isDone ? 'disabled' : ''} style="${isDone ? 'text-decoration: line-through;' : ''}">Done</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
 
-    function markDone(button) {
-        const row = button.closest('tr');
-        const taskName = row.querySelector('td').textContent;
+        function markDone(button) {
+            const row = button.closest('tr');
+            const taskName = row.querySelector('td').textContent;
 
-        // Update the task status in the localStorage
-        const taskIndex = tasks.findIndex(task => task.name === taskName);
-        if (taskIndex !== -1) {
-            tasks[taskIndex].isDone = true;
-            localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+            // Update the task status in the localStorage
+            const taskIndex = tasks.findIndex(task => task.name === taskName);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].isDone = true;
+                localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+            }
+
+            // Mark the task as done on the UI
+            row.style.textDecoration = 'line-through';
+            button.disabled = true;
         }
 
-        // Mark the task as done on the UI
-        row.style.textDecoration = 'line-through';
-        button.disabled = true;
-    }
-</script>
+        function showLoading(button) {
+            // Add loading class to button
+            button.classList.add('loading');
+
+            // Simulate loading for 2 seconds
+            setTimeout(function() {
+                button.classList.remove('loading');
+                window.location.href = button.href; // Navigate to the link after loading
+            }, 2000);
+
+            // Prevent default action to allow loading animation
+            event.preventDefault();
+        }
+    
+    
+    </script>
 
 </body>
 </html>
