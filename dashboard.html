@@ -1,0 +1,64 @@
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard - Daily Airdrop Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>Daily Airdrop Tracker</strong></li>
+        </ul>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html" role="button">Contact</a></li>
+        </ul>
+    </nav>
+    <main class="container">
+        <h1>Dashboard</h1>
+        <table role="grid" id="airdropTable">
+            <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Link</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be dynamically loaded via JavaScript -->
+            </tbody>
+        </table>
+        <a href="add-task.html" class="button">Add New Task</a>
+    </main>
+    <footer class="container">
+        <small><a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a></small>
+    </footer>
+
+    <script>
+        const tableBody = document.querySelector('#airdropTable tbody');
+        const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
+
+        tasks.forEach(({ name, link }) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
+                <td><button onclick="markDone(this)">Done</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        function markDone(button) {
+            const row = button.closest('tr');
+            row.style.textDecoration = 'line-through';
+            button.disabled = true;
+        }
+    </script>
+</body>
+</html>
