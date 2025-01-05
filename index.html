@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,27 +5,313 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Daily Airdrop Tracker</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        /* Body background dark effect */
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            margin: 0;
+            position: relative;
+            height: 100vh;
+        }
+
+        /* 3D Flip effect for GLAQZ text */
+        .glaqz-animation {
+            font-family: 'Courier New', monospace;
+            font-size: 8rem; /* Large size */
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #ff0077;
+            display: inline-block;
+            transform-style: preserve-3d;
+            animation: flipIn 3s ease-in-out forwards;
+            position: relative;
+            letter-spacing: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Keyframes for 3D flip animation */
+        @keyframes flipIn {
+            0% {
+                transform: rotateY(-180deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+                transform: rotateY(90deg);
+            }
+            100% {
+                transform: rotateY(0);
+            }
+        }
+
+        /* Glitch effect */
+        .glaqz-animation.glitch {
+            position: relative;
+            animation: glitch-anim 1.5s infinite;
+        }
+
+        @keyframes glitch-anim {
+            0% {
+                clip-path: inset(0 0 0 0);
+                text-shadow: 2px 2px 0 rgba(255, 0, 0, 0.7), -2px -2px 0 rgba(0, 255, 0, 0.7);
+            }
+            10% {
+                clip-path: inset(20% 0 50% 0);
+                text-shadow: 1px 1px 0 rgba(255, 0, 0, 0.7), -1px -1px 0 rgba(0, 255, 0, 0.7);
+            }
+            20% {
+                clip-path: inset(50% 0 10% 0);
+                text-shadow: 3px 3px 0 rgba(255, 0, 0, 0.7), -3px -3px 0 rgba(0, 255, 0, 0.7);
+            }
+            30% {
+                clip-path: inset(30% 0 60% 0);
+                text-shadow: 2px 2px 0 rgba(255, 0, 0, 0.7), -2px -2px 0 rgba(0, 255, 0, 0.7);
+            }
+            50% {
+                clip-path: inset(10% 0 40% 0);
+                text-shadow: 2px 2px 0 rgba(255, 0, 0, 0.7), -2px -2px 0 rgba(0, 255, 0, 0.7);
+            }
+            100% {
+                clip-path: inset(0 0 0 0);
+                text-shadow: 2px 2px 0 rgba(255, 0, 0, 0.7), -2px -2px 0 rgba(0, 255, 0, 0.7);
+            }
+        }
+
+        /* Button Style - Terminal color */
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: transparent;
+            color: #00ff00; /* Green text */
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 255, 0, 0.3);
+            text-align: center;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .button:hover {
+            background-color: #00ff00;
+            color: black;
+            box-shadow: 0 8px 16px rgba(0, 255, 0, 0.6);
+        }
+
+        .button:active {
+            transform: scale(0.95); /* Button press effect */
+        }
+
+        /* Animation - Terminal Cursor */
+        .terminal-cursor {
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            width: 2px;
+            height: 1.5em;
+            background-color: #00ff00;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0% {
+                visibility: hidden;
+            }
+            50% {
+                visibility: visible;
+            }
+            100% {
+                visibility: hidden;
+            }
+        }
+
+        /* Navigation bar styles */
+        nav {
+            background-color: #121212;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            display: inline;
+            margin-right: 30px;
+        }
+
+        nav ul li a {
+            color: #00ff00;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #00cc00;
+        }
+
+        nav ul li a:hover .terminal-cursor {
+            animation: none; /* Hide cursor when hovered */
+        }
+
+        /* Fade-in animation for other text */
+        .fade-in {
+            font-size: 1.5rem;
+            font-weight: normal;
+            opacity: 0;
+            animation: fadeIn 3s ease-in-out 6s forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Background particle effect */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: particleMovement 5s linear infinite;
+        }
+
+        @keyframes particleMovement {
+            0% {
+                top: 0;
+                left: 50%;
+                transform: scale(0);
+            }
+            100% {
+                top: 100%;
+                left: 50%;
+                transform: scale(1);
+            }
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            .glaqz-animation {
+                font-size: 5rem;
+                letter-spacing: 6px;
+            }
+
+            .fade-in {
+                font-size: 1.2rem;
+            }
+
+            nav ul li {
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            nav ul li a {
+                font-size: 1rem;
+            }
+
+            .button {
+                font-size: 1rem;
+                padding: 12px 24px;
+            }
+
+            .particles {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .glaqz-animation {
+                font-size: 4rem;
+                letter-spacing: 4px;
+            }
+
+            .fade-in {
+                font-size: 1rem;
+            }
+
+            nav ul li a {
+                font-size: 0.9rem;
+            }
+
+            .button {
+                font-size: 0.9rem;
+                padding: 10px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="particles">
+        <!-- Random particles -->
+        <div class="particle" style="animation-duration: 4s; animation-delay: 0s; left: 10%;"></div>
+        <div class="particle" style="animation-duration: 3s; animation-delay: 1s; left: 30%;"></div>
+        <div class="particle" style="animation-duration: 5s; animation-delay: 2s; left: 50%;"></div>
+        <div class="particle" style="animation-duration: 4s; animation-delay: 3s; left: 70%;"></div>
+        <div class="particle" style="animation-duration: 6s; animation-delay: 4s; left: 90%;"></div>
+    </div>
+
     <nav class="container-fluid">
         <ul>
             <li><strong>Daily Airdrop Tracker</strong></li>
         </ul>
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="features.html">Features</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="contact.html" role="button">Contact</a></li>
+            <li><a href="index.html">Home<span class="terminal-cursor"></span></a></li>
+            <li><a href="features.html">Features<span class="terminal-cursor"></span></a></li>
+            <li><a href="dashboard.html">Dashboard<span class="terminal-cursor"></span></a></li>
+            <li><a href="about.html">About<span class="terminal-cursor"></span></a></li>
+            <li><a href="contact.html">Contact<span class="terminal-cursor"></span></a></li>
         </ul>
     </nav>
+
     <main class="container">
-        <h1>Welcome to Daily Airdrop Tracker</h1>
-        <p>Your go-to tool for managing and tracking daily crypto airdrops and tasks!</p>
-        <a href="dashboard.html" class="button">Go to Dashboard</a>
+        <h1 class="typing-effect">Welcome to Daily Airdrop Tracker</h1>
+        <p class="fade-in">Your go-to tool for managing and tracking daily crypto airdrops and tasks!</p>
+        <h2 class="glaqz-animation glitch">GLAQZ</h2>
+        <a href="dashboard.html" class="button" id="dashboardBtn">Go to Dashboard<span class="terminal-cursor"></span></a>
     </main>
+
     <footer class="container">
         <small><a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a></small>
     </footer>
+
+    <script>
+        // Add jitter effect on button click
+        document.getElementById('dashboardBtn').addEventListener('click', function() {
+            this.classList.add('jitter');
+            setTimeout(() => {
+                this.classList.remove('jitter');
+            }, 200); // Remove jitter after the animation completes
+        });
+    </script>
 </body>
 </html>
