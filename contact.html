@@ -20,7 +20,7 @@
     </nav>
     <main class="container">
         <h1>Contact Us</h1>
-        <form id="contactForm">
+        <form action="https://script.google.com/macros/s/AKfycbw_Pl2N6Tl5ceTZvBHe0VrU1HsYF58_TY3lzDz8Zcu2aAkU6VgpoZSNztF5WHrYcErN/exec" method="POST">
             <label for="name">Name</label>
             <input type="text" id="name" name="name" placeholder="Your Name" required>
             <label for="email">Email</label>
@@ -34,30 +34,5 @@
     <footer class="container">
         <small><a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a></small>
     </footer>
-
-    <script>
-document.getElementById('contactForm').addEventListener('submit', function(event) {
-    event.preventDefault();  // Prevent form from refreshing the page
-
-    const formData = new FormData(this);  // Collect form data
-
-    // Use the provided Google Apps Script Web App URL to send the form data
-    fetch('https://script.google.com/macros/s/AKfycbw_Pl2N6Tl5ceTZvBHe0VrU1HsYF58_TY3lzDz8Zcu2aAkU6VgpoZSNztF5WHrYcErN/exec', {
-        method: 'POST',
-        body: formData  // Send the form data
-    })
-    .then(response => response.text())  // Parse the response
-    .then(responseText => {
-        console.log("Server Response: ", responseText);  // Log the response
-        alert(responseText);  // Show the response in the alert
-        this.reset();  // Reset the form after submission
-    })
-    .catch(error => {
-        console.error("Error: ", error);  // Log the error
-        alert('Error sending message');
-    });
-});
-
-    </script>
 </body>
 </html>
