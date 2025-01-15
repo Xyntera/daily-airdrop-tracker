@@ -5,34 +5,359 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Contact - Daily Airdrop Tracker</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation bar styles */
+        nav {
+            background-color: #121212;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            display: inline;
+            margin-right: 30px;
+        }
+
+        nav ul li a {
+            color: #00ff00;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #00cc00;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: transparent;
+            color: #00ff00;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s ease-in-out, box-shadow 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 255, 0, 0.3);
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .button:hover {
+            background-color: #00ff00;
+            color: black;
+            box-shadow: 0 8px 16px rgba(0, 255, 0, 0.6);
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        /* Terminal Cursor */
+        .terminal-cursor {
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            width: 2px;
+            height: 1.5em;
+            background-color: #00ff00;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* GLAQZ badge with breaking animation */
+        .glaqz-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff0077; /* Pink for contrast */
+            background-color: #121212;
+            padding: 10px 20px;
+            border-radius: 5px;
+            animation: badgeGlow 2s infinite alternate, breaking 3s infinite;
+            z-index: 100;
+            border: 2px solid #ff0077;
+        }
+
+        @keyframes badgeGlow {
+            from { box-shadow: 0 0 10px #ff0077; }
+            to { box-shadow: 0 0 20px #ff0077, 0 0 30px #ff0077; }
+        }
+
+        @keyframes breaking {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30% { transform: rotate(5deg); }
+            20%, 40% { transform: rotate(-5deg); }
+            50% { transform: rotate(0deg); }
+            60%, 80% { transform: rotate(-5deg); }
+            70%, 90% { transform: rotate(5deg); }
+        }
+
+        /* Particle effect */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: particleMovement 5s linear infinite;
+        }
+
+        @keyframes particleMovement {
+            0% {
+                top: 0;
+                left: 50%;
+                transform: scale(0);
+            }
+            100% {
+                top: 100%;
+                left: 50%;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            nav ul li {
+                display: block;
+                margin-bottom: 10px;
+            }
+            nav ul li a {
+                font-size: 1rem;
+            }
+            .glaqz-badge {
+                font-size: 1rem;
+                padding: 5px 10px;
+            }
+            .particles {
+                display: none;
+            }
+        }
+
+        /* Form styling */
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        form label, form input, form textarea, form button {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        form input, form textarea {
+            background-color: #333;
+            border: 1px solid #00ff00;
+            color: white;
+        }
+
+        form button {
+            background-color: #00ff00;
+            color: black;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #00cc00;
+        }
+
+        /* Social Media Link Animations */
+        .social-link {
+            position: relative;
+            display: inline-block;
+            color: #00ff00;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .social-link:hover {
+            color: #00cc00;
+        }
+
+        .social-link::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #00ff00;
+            visibility: hidden;
+            transform: scaleX(0);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .social-link:hover::before {
+            visibility: visible;
+            transform: scaleX(1);
+        }
+
+        /* X Animation for @glaqzz */
+        .x-animation::after {
+            content: 'X';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            opacity: 0;
+            color: #ff0077;
+            animation: xScale 0.5s ease-in-out;
+        }
+
+        .x-animation:hover::after {
+            animation: xScale 0.5s ease-in-out forwards;
+        }
+
+        @keyframes xScale {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* Telegram Aeroplane Animation for @glaqz */
+        .telegram-animation::after {
+            content: '\2708'; /* Unicode for airplane */
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            opacity: 0;
+            color: #00ff00;
+            animation: flyIn 0.5s ease-out;
+        }
+
+        .telegram-animation:hover::after {
+            animation: flyIn 0.5s ease-out forwards;
+        }
+
+        @keyframes flyIn {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* Scrollable Content */
+        .scrollable-content {
+            flex: 1 0 auto;
+            overflow-y: scroll; /* Changed to scroll to always show scrollbar */
+            padding-bottom: 60px; /* Space for footer */
+        }
+
+        /* Custom Scrollbar */
+        .scrollable-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-track {
+            background: #121212; /* Black background */
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb {
+            background: #0000ff; /* Blue neon color for thumb */
+            border-radius: 0; /* Make it look like a terminal bar */
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb:hover {
+            background: #0000cc; /* Darker blue on hover */
+        }
+
+        footer {
+            flex-shrink: 0;
+            background-color: #121212;
+            padding: 20px 0;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
+    <div class="particles">
+        <div class="particle" style="animation-duration: 4s; animation-delay: 0s; left: 10%;"></div>
+        <div class="particle" style="animation-duration: 3s; animation-delay: 1s; left: 30%;"></div>
+        <div class="particle" style="animation-duration: 5s; animation-delay: 2s; left: 50%;"></div>
+        <div class="particle" style="animation-duration: 4s; animation-delay: 3s; left: 70%;"></div>
+        <div class="particle" style="animation-duration: 6s; animation-delay: 4s; left: 90%;"></div>
+    </div>
+
     <nav class="container-fluid">
         <ul>
             <li><strong>Daily Airdrop Tracker</strong></li>
         </ul>
         <ul>
-            <li><a href="/home">Home</a></li>
-            <li><a href="/features">Features</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/contact" role="button">Contact</a></li>
+            <li><a href="/home">Home<span class="terminal-cursor"></span></a></li>
+            <li><a href="/features">Features<span class="terminal-cursor"></span></a></li>
+            <li><a href="/about">About<span class="terminal-cursor"></span></a></li>
+            <li><a href="/contact">Contact<span class="terminal-cursor"></span></a></li>
         </ul>
     </nav>
-    <main class="container">
-        <h1>Contact Us</h1>
-        <form action="https://script.google.com/macros/s/AKfycbw_Pl2N6Tl5ceTZvBHe0VrU1HsYF58_TY3lzDz8Zcu2aAkU6VgpoZSNztF5WHrYcErN/exec" method="POST">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" placeholder="Your Name" required>
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="Your Email" required>
-            <label for="message">Message</label>
-            <textarea id="message" name="message" placeholder="Your Message" required></textarea>
-            <button type="submit">Send Message</button>
-        </form>
-        <a href="/home" class="button">Go Back to Home</a>
-    </main>
+
+    <div class="scrollable-content">
+        <main class="container">
+            <h1>Contact Us</h1>
+            <p>Connect with us on:</p>
+            <ul>
+                <li><a href="https://t.me/glaqz" class="social-link telegram-animation">Telegram @glaqz</a></li>
+                <li><a href="https://twitter.com/glaqzz" class="social-link x-animation">X @glaqzz</a></li>
+            </ul>
+            <form action="https://script.google.com/macros/s/AKfycbw_Pl2N6Tl5ceTZvBHe0VrU1HsYF58_TY3lzDz8Zcu2aAkU6VgpoZSNztF5WHrYcErN/exec" method="POST">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Your Name" required>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Your Email" required>
+                <label for="message">Message</label>
+                <textarea id="message" name="message" placeholder="Your Message" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+            <a href="/home" class="button">Go Back to Home<span class="terminal-cursor"></span></a>
+        </main>
+    </div>
+
     <footer class="container">
-        <small><a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a></small>
+        <small><a href="#"></a>  <a href="#"></a></small>
     </footer>
+
 </body>
 </html>
