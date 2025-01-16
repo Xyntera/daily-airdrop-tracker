@@ -215,6 +215,7 @@ button[data-index]:hover {
 
     /* ... (previous styles) ... */
 
+
     :root {
         --neon-green: #00ff00;
     }
@@ -223,12 +224,17 @@ button[data-index]:hover {
         overflow-y: auto;
         max-height: 70vh;
         padding-right: 10px; /* Space for scrollbar */
-        scrollbar-color: var(--neon-green) transparent; /* For Firefox */
         scrollbar-width: thin; /* For Firefox */
     }
 
-    /* Webkit based browsers (Chrome, Safari) */
+    /* Hide scrollbar by default */
     main::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+
+    /* Show scrollbar on hover */
+    main:hover::-webkit-scrollbar {
         width: 12px;
     }
 
@@ -240,10 +246,6 @@ button[data-index]:hover {
         background-color: var(--neon-green);
         border-radius: 6px;
         border: 3px solid transparent; /* Gives more space around the thumb */
-    }
-
-    /* Enhanced glass animation for the scrollbar thumb */
-    main::-webkit-scrollbar-thumb {
         background-clip: padding-box; /* Ensure the border doesn't overlap with background */
         background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent);
         background-size: 40px 40px;
@@ -258,6 +260,7 @@ button[data-index]:hover {
             background-position: 100% 100%;
         }
     }
+
 
     /* ... (rest of the styles) ... */
 
