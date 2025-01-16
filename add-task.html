@@ -211,6 +211,12 @@ button[data-index]:hover {
     background-color: #e00404;
     color: black;
 }
+
+main {
+    overflow-y: auto;  /* Add vertical scrollbar when content overflows */
+    max-height: 70vh;  /* Limit the height of the main content area */
+}
+        
     </style>
 </head>
 <body>
@@ -235,7 +241,7 @@ button[data-index]:hover {
             <li><a href="/contact">Contact<span class="terminal-cursor"></span></a></li>
         </ul>
     </nav>
-    <main class="container">
+        <main class="container">
         <h1>Manage Tasks</h1>
         <form id="addAirdropForm">
             <input type="text" id="taskName" placeholder="Task Name" required>
