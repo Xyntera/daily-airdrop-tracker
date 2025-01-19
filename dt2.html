@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard - Daily Airdrop Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+
+        nav ul {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        nav ul li {
+            margin: 10px;
+        }
+
+        .dashboard-title {
+            position: relative;
+            font-family: 'Poppins', sans-serif;
+            font-size: 3.5rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+            color: transparent;
+            text-align: center;
+            margin: 30px 0;
+            -webkit-text-stroke: 1px #ffffff;
+            overflow: hidden;
+        }
+
+        .dashboard-title::before,
+        .dashboard-title::after {
+            content: "DASHBOARD";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            color: #00ff00;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 10%, rgba(0, 255, 0, 0.3) 30%, rgba(0, 0, 0, 0) 70%);
+            clip-path: polygon(0% 0%, 20% 0%, 15% 100%, 0% 100%);
+            animation: glassBlocker 2s linear infinite;
+            opacity: 0.7;
+        }
+
+        .dashboard-title::after {
+            background: linear-gradient(90deg, rgba(0, 0, 255, 0.4) 10%, rgba(255, 0, 255, 0.5) 30%, rgba(0, 0, 0, 0) 70%);
+            clip-path: polygon(80% 0%, 100% 0%, 100% 100%, 85% 100%);
+            animation-delay: 1s;
+        }
+
+        @keyframes glassBlocker {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #444;
+            color: white;
+        }
+
+        th {
+            background-color: #333;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: transparent;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: #00ff00;
+            color: #121212;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-title {
+                font-size: 2.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-title {
+                font-size: 2rem;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 5px;
+            }
+        }
+
+        #calendar {
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            color: white;
+            background: #121212;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .fc-daygrid-day-number {
+            color: #00ff00;
+            transition: color 0.3s ease;
+        }
+        .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+            color: #00ff00;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .fc-daygrid-event {
+            opacity: 0.8;
+            background-color: #00ff00;
+            border: none;
+            border-radius: 5px;
+            animation: pulse 2s infinite alternate;
+        }
+        @keyframes pulse {
+            from { opacity: 0.8; }
+            to { opacity: 1; }
+        }
+        .fc-toolbar-title {
+            color: #ffffff;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        .fc-button {
+            background-color: transparent;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .fc-button:hover {
+            background-color: #00ff00;
+            color: #121212;
+        }
+        
+        #taskGraph {
+            width: 100%;
+            height: 400px;
+            background: #121212;
+            margin-top: 20px;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+        }
+        .graph-tooltip {
+            background: rgba(0, 255, 0, 0.8);
+            color: black;
+            border-radius: 3px;
+            padding: 5px;
+            pointer-events: none;
+        }
+        
+        .calendar-popup {
+            position: absolute;
+            background-color: #121212;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            padding: 10px;
+            display: none;
+            z-index: 1000;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><strong>Daily Airdrop Tracker</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/home" class="button">Home</a></li>
+            <li><a href="/features" class="button">Features</a></li>
+            <li><a href="/about" class="button">About</a></li>
+            <li><a href="/contact" class="button">Contact</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1 class="dashboard-title">DASHBOARD</h1>
+    </header>
+
+    <main class="container">
+        <div id="calendar"></div>
+        <table id="airdropTable">
+            <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Link</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Tasks dynamically added via JavaScript -->
+            </tbody>
+        </table>
+        <a href="/add-task-list" class="button">Add New Task</a>
+        
+        <canvas id="taskGraph"></canvas>
+        <div id="calendarPopup" class="calendar-popup"></div>
+    </main>
+
+    <footer class="container">
+        <small><a href="#"> </a>  <a href="#"> </a></small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const tableBody = document.querySelector('#airdropTable tbody');
+        const calendarEl = document.getElementById('calendar');
+        let tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
+        const lastResetDate = localStorage.getItem('lastResetDate');
+        const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+        if (lastResetDate !== today) {
+            tasks.forEach(task => (task.isDone = false)); 
+            localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+            localStorage.setItem('lastResetDate', today);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: tasks.map(task => ({
+                    title: task.name,
+                    start: task.date || today,
+                    backgroundColor: task.isDone ? '#00ff00' : '#ff0000',
+                    borderColor: '#00ff00',
+                    textColor: 'black',
+                    extendedProps: { taskId: task.name }
+                })),
+                eventClick: function(info) {
+                    const taskId = info.event.extendedProps.taskId;
+                    const task = tasks.find(t => t.name === taskId);
+                    if (task) {
+                        task.isDone = !task.isDone;
+                        localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+                        info.event.setProp('backgroundColor', task.isDone ? '#00ff00' : '#ff0000');
+                        updateTaskGraph();
+                        updateTaskTable(taskId, task.isDone);
+                    }
+                },
+                dateClick: function(info) {
+                    showDateDetails(info.dateStr);
+                }
+            });
+            calendar.render();
+        });
+
+        function updateTaskTable(taskId, isDone) {
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                if (row.cells[0].textContent === taskId) {
+                    const button = row.querySelector('button');
+                    button.disabled = isDone;
+                    row.style.textDecoration = isDone ? 'line-through' : 'none';
+                }
+            });
+        }
+
+        tasks.forEach(({ name, link, isDone, date }) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
+                <td><button onclick="markDone(this, '${name}', '${date || today}')" ${isDone ? 'disabled' : ''} style="${isDone ? 'text-decoration: line-through;' : ''}">Done</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        function markDone(button, taskName, taskDate) {
+            const row = button.closest('tr');
+            const taskIndex = tasks.findIndex(task => task.name === taskName && task.date === taskDate);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].isDone = !tasks[taskIndex].isDone;
+                localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+                
+                const calendar = document.querySelector('#calendar')._calendar;
+                const events = calendar.getEvents();
+                events.forEach(event => {
+                    if (event.extendedProps.taskId === taskName && event.start.toISOString().split('T')[0] === taskDate) {
+                        event.setProp('backgroundColor', tasks[taskIndex].isDone ? '#00ff00' : '#ff0000');
+                    }
+                });
+                calendar.render();
+
+                row.style.textDecoration = tasks[taskIndex].isDone ? 'line-through' : 'none';
+                button.disabled = tasks[taskIndex].isDone;
+                updateTaskGraph();
+            }
+        }
+
+        function updateTaskGraph() {
+            const ctx = document.getElementById('taskGraph').getContext('2d');
+            const periods = ['7days', '14days', '30days', '2months', '3months', 'year'];
+            const completionRates = calculateCompletionRates(periods);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: periods,
+                    datasets: [{
+                        label: 'Task Completion Rate (%)',
+                        data: completionRates,
+                        backgroundColor: completionRates.map(rate => rate === 100 ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)'),
+                        borderColor: 'rgba(0, 255, 0, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#00ff00'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#00ff00'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            enabled: false,
+                            external: function(context) {
+                                var tooltipEl = document.getElementById('graphTooltip');
+                                if (!tooltipEl) {
+                                    tooltipEl = document.createElement('div');
+                                    tooltipEl.id = 'graphTooltip';
+                                    tooltipEl.className = 'graph-tooltip';
+                                    document.body.appendChild(tooltipEl);
+                                }
+
+                                var tooltipModel = context.tooltip;
+                                if (tooltipModel.opacity === 0) {
+                                    tooltipEl.style.opacity = 0;
+                                    return;
+                                }
+
+                                tooltipEl.innerHTML = tooltipModel.body.map(b => b.lines).join('\n');
+                                const position = context.chart.canvas.getBoundingClientRect();
+                                tooltipEl.style.opacity = 1;
+                                tooltipEl.style.position = 'absolute';
+                                tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+                                tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
+                                tooltipEl.style.fontFamily = tooltipModel._bodyFontFamily;
+                                tooltipEl.style.fontSize = tooltipModel.bodyFontSize + 'px';
+                                tooltipEl.style.padding = tooltipModel.yPadding + 'px ' + tooltipModel.xPadding + 'px';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calculateCompletionRates(periods) {
+            const today = new Date();
+            return periods.map(period => {
+                let endDate = new Date(today);
+                let startDate = new Date(today);
+                switch(period) {
+                    case '7days': startDate.setDate(today.getDate() - 7); break;
+                    case '14days': startDate.setDate(today.getDate() - 14); break;
+                    case '30days': startDate.setDate(today.getDate() - 30); break;
+                    case '2months': startDate.setMonth(today.getMonth() - 2); break;
+                    case '3months': startDate.setMonth(today.getMonth() - 3); break;
+                    case 'year': startDate.setFullYear(today.getFullYear() - 1); break;
+                }
+
+                const tasksInPeriod = tasks.filter(task => {
+                    const taskDate = new Date(task.date);
+                    return taskDate >= startDate && taskDate <= endDate;
+                });
+
+                const total = tasksInPeriod.length;
+                const completed = tasksInPeriod.filter(task => task.isDone).length;
+                return total > 0 ? (completed / total) * 100 : 0;
+            });
+        }
+
+        function showDateDetails(date) {
+            const popup = document.getElementById('calendarPopup');
+            popup.style.display = 'block';
+            popup.style.left = `${event.pageX}px`;
+            popup.style.top = `${event.pageY}px`;
+
+            const filteredTasks = tasks.filter(task => task.date === date);
+            if (filteredTasks.length > 0) {
+                popup.innerHTML = `<h3>Tasks for ${date}</h3>`;
+                filteredTasks.forEach(task => {
+                    popup.innerHTML += `
+                        <p>${task.name} - ${task.isDone ? 'Completed' : 'Pending'} 
+                        ${task.link ? `<a href="${task.link}" target="_blank">Link</a>` : ''}
+                        <button onclick="toggleTaskCompletion('${task.name}', '${date}')">${task.isDone ? 'Undo' : 'Complete'}</button></p>
+                    `;
+                });
+            } else {
+                popup.innerHTML = `<p>No tasks for ${date}</p>`;
+            }
+            
+            document.addEventListener('click', function closePopup(e) {
+                if (!popup.contains(e.target)) {
+                    popup.style.display = 'none';
+                    document.removeEventListener('click', closePopup);
+                }
+            });
+        }
+
+        function toggleTaskCompletion(taskName, taskDate) {
+            const taskIndex = tasks.findIndex(task => task.name === taskName && task.date === taskDate);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].isDone = !tasks[taskIndex].isDone;
+                localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+                updateTaskGraph();
+                updateTaskTable(taskName, tasks[taskIndex].isDone);
+                showDateDetails(taskDate); // Refresh popup content
+            }
+        }
+
+        updateTaskGraph();
+    </script>
+</body>
+</html>
