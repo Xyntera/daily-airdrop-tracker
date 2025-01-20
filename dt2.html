@@ -262,37 +262,39 @@ th {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>const tableBody = document.querySelector('#airdropTable tbody');
 const calendarEl = document.getElementById('calendar');
-let tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
-const lastResetDate = localStorage.getItem('lastResetDate');
+const popup = document.getElementById('calendarPopup');
+
 const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
-if (lastResetDate !== today) {
-    tasks.forEach(task => (task.isDone = false)); 
-    localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
-    localStorage.setItem('lastResetDate', today);
+// Load all tasks from localStorage
+let allTasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || {};
+
+// Ensure today has an entry in allTasks
+if (!allTasks[today]) {
+    allTasks[today] = [];
+    localStorage.setItem('dailyAirdrops', JSON.stringify(allTasks));
 }
+
+// Load tasks for today
+const tasks = allTasks[today];
 
 document.addEventListener('DOMContentLoaded', function() {
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        events: tasks.map(task => ({
-            title: task.name,
-            start: task.date || today,
-            backgroundColor: task.isDone ? '#00ff00' : '#ff0000',
-            borderColor: '#00ff00',
-            textColor: 'black',
-            extendedProps: { taskId: task.name }
-        })),
+        events: Object.keys(allTasks).flatMap(date =>
+            allTasks[date].map(task => ({
+                title: task.name,
+                start: date,
+                backgroundColor: task.isDone ? '#00ff00' : '#ff0000',
+                borderColor: '#00ff00',
+                textColor: 'black',
+                extendedProps: { taskId: task.name, taskDate: date }
+            }))
+        ),
         eventClick: function(info) {
-            const taskId = info.event.extendedProps.taskId;
-            const task = tasks.find(t => t.name === taskId);
-            if (task) {
-                task.isDone = !task.isDone;
-                localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
-                info.event.setProp('backgroundColor', task.isDone ? '#00ff00' : '#ff0000');
-                updateTaskGraph();
-                updateTaskTable(taskId, task.isDone);
-            }
+            const { taskId, taskDate } = info.event.extendedProps;
+            toggleTaskCompletion(taskId, taskDate);
+            info.event.setProp('backgroundColor', allTasks[taskDate].find(t => t.name === taskId).isDone ? '#00ff00' : '#ff0000');
         },
         dateClick: function(info) {
             showDateDetails(info.dateStr);
@@ -300,6 +302,74 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     calendar.render();
 });
+
+// Populate table with today's tasks
+tasks.forEach(({ name, link, isDone }) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${name}</td>
+        <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
+        <td><button onclick="markDone(this, '${name}', '${today}')" ${isDone ? 'disabled' : ''} style="${isDone ? 'text-decoration: line-through;' : ''}">Done</button></td>
+    `;
+    tableBody.appendChild(row);
+});
+
+function markDone(button, taskName, taskDate) {
+    let allTasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || {};
+    if (!allTasks[taskDate]) return;
+
+    const taskIndex = allTasks[taskDate].findIndex(task => task.name === taskName);
+    if (taskIndex !== -1) {
+        allTasks[taskDate][taskIndex].isDone = !allTasks[taskDate][taskIndex].isDone;
+        localStorage.setItem('dailyAirdrops', JSON.stringify(allTasks));
+
+        button.disabled = allTasks[taskDate][taskIndex].isDone;
+        button.closest('tr').style.textDecoration = allTasks[taskDate][taskIndex].isDone ? 'line-through' : 'none';
+
+        updateCalendar(taskName, taskDate, allTasks[taskDate][taskIndex].isDone);
+    }
+}
+
+function showDateDetails(date) {
+    let allTasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || {};
+    const tasksForDate = allTasks[date] || [];
+
+    popup.style.display = 'block';
+    popup.innerHTML = `<h3>Tasks for ${date}</h3>`;
+
+    if (tasksForDate.length > 0) {
+        tasksForDate.forEach(task => {
+            popup.innerHTML += `
+                <p>${task.name} - ${task.isDone ? '✅ Completed' : '❌ Pending'}
+                ${task.link ? `<a href="${task.link}" target="_blank">Visit Link</a>` : ''}
+                <button onclick="toggleTaskCompletion('${task.name}', '${date}')">${task.isDone ? 'Undo' : 'Complete'}</button></p>
+            `;
+        });
+    } else {
+        popup.innerHTML += `<p>No tasks for ${date}</p>`;
+    }
+
+    // Close popup when clicking outside
+    document.addEventListener('click', function closePopup(e) {
+        if (!popup.contains(e.target)) {
+            popup.style.display = 'none';
+            document.removeEventListener('click', closePopup);
+        }
+    });
+}
+
+function toggleTaskCompletion(taskName, taskDate) {
+    let allTasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || {};
+    if (!allTasks[taskDate]) return;
+
+    const taskIndex = allTasks[taskDate].findIndex(task => task.name === taskName);
+    if (taskIndex !== -1) {
+        allTasks[taskDate][taskIndex].isDone = !allTasks[taskDate][taskIndex].isDone;
+        localStorage.setItem('dailyAirdrops', JSON.stringify(allTasks));
+        updateTaskTable(taskName, allTasks[taskDate][taskIndex].isDone);
+        showDateDetails(taskDate);
+    }
+}
 
 function updateTaskTable(taskId, isDone) {
     const rows = tableBody.querySelectorAll('tr');
@@ -312,180 +382,16 @@ function updateTaskTable(taskId, isDone) {
     });
 }
 
-tasks.forEach(({ name, link, isDone, date }) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td>${name}</td>
-        <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
-        <td><button onclick="markDone(this, '${name}', '${date || today}')" ${isDone ? 'disabled' : ''} style="${isDone ? 'text-decoration: line-through;' : ''}">Done</button></td>
-    `;
-    tableBody.appendChild(row);
-});
-
-function markDone(button, taskName, taskDate) {
-    const row = button.closest('tr');
-    const taskIndex = tasks.findIndex(task => task.name === taskName && task.date === taskDate);
-    if (taskIndex !== -1) {
-        tasks[taskIndex].isDone = !tasks[taskIndex].isDone;
-        localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
-        
-        const calendar = document.querySelector('#calendar')._calendar;
-        const events = calendar.getEvents();
-        events.forEach(event => {
-            if (event.extendedProps.taskId === taskName && event.start.toISOString().split('T')[0] === taskDate) {
-                event.setProp('backgroundColor', tasks[taskIndex].isDone ? '#00ff00' : '#ff0000');
-            }
-        });
-        calendar.render();
-
-        row.style.textDecoration = tasks[taskIndex].isDone ? 'line-through' : 'none';
-        button.disabled = tasks[taskIndex].isDone;
-        updateTaskGraph();
-    }
-}
-
-function updateTaskGraph() {
-    const ctx = document.getElementById('taskGraph').getContext('2d');
-    const periods = ['7days', '14days', '30days', '2months', '3months', 'year'];
-    const completionRates = calculateCompletionRates(periods);
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: periods,
-            datasets: [{
-                label: 'Task Completion Rate (%)',
-                data: completionRates,
-                backgroundColor: completionRates.map(rate => rate === 100 ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)'),
-                borderColor: 'rgba(0, 255, 0, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        color: '#00ff00'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#00ff00'
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    enabled: false,
-                    external: function(context) {
-                        var tooltipEl = document.getElementById('graphTooltip');
-                        if (!tooltipEl) {
-                            tooltipEl = document.createElement('div');
-                            tooltipEl.id = 'graphTooltip';
-                            tooltipEl.className = 'graph-tooltip';
-                            document.body.appendChild(tooltipEl);
-                        }
-
-                        var tooltipModel = context.tooltip;
-                        if (tooltipModel.opacity === 0) {
-                            tooltipEl.style.opacity = 0;
-                            return;
-                        }
-
-                        tooltipEl.innerHTML = tooltipModel.body.map(b => b.lines).join('\n');
-                        const position = context.chart.canvas.getBoundingClientRect();
-                        tooltipEl.style.opacity = 1;
-                        tooltipEl.style.position = 'absolute';
-                        tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
-                        tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
-                        tooltipEl.style.fontFamily = tooltipModel._bodyFontFamily;
-                        tooltipEl.style.fontSize = tooltipModel.bodyFontSize + 'px';
-                        tooltipEl.style.padding = tooltipModel.yPadding + 'px ' + tooltipModel.xPadding + 'px';
-                    }
-                }
-            }
+function updateCalendar(taskName, taskDate, isDone) {
+    const calendar = document.querySelector('#calendar')._calendar;
+    const events = calendar.getEvents();
+    events.forEach(event => {
+        if (event.extendedProps.taskId === taskName && event.start.toISOString().split('T')[0] === taskDate) {
+            event.setProp('backgroundColor', isDone ? '#00ff00' : '#ff0000');
         }
     });
+    calendar.render();
 }
-
-function calculateCompletionRates(periods) {
-    const today = new Date();
-    return periods.map(period => {
-        let endDate = new Date(today);
-        let startDate = new Date(today);
-        switch(period) {
-            case '7days': startDate.setDate(today.getDate() - 7); break;
-            case '14days': startDate.setDate(today.getDate() - 14); break;
-            case '30days': startDate.setDate(today.getDate() - 30); break;
-            case '2months': startDate.setMonth(today.getMonth() - 2); break;
-            case '3months': startDate.setMonth(today.getMonth() - 3); break;
-            case 'year': startDate.setFullYear(today.getFullYear() - 1); break;
-        }
-
-        const tasksInPeriod = tasks.filter(task => {
-            const taskDate = new Date(task.date);
-            return taskDate >= startDate && taskDate <= endDate;
-        });
-
-        const total = tasksInPeriod.length;
-        const completed = tasksInPeriod.filter(task => task.isDone).length;
-        return total > 0 ? (completed / total) * 100 : 0;
-    });
-}
-
-function showDateDetails(date) {
-    const popup = document.getElementById('calendarPopup');
-    popup.style.display = 'block';
-    // Position the popup relative to the clicked date
-    const calendarElement = document.getElementById('calendar');
-    const calendarRect = calendarElement.getBoundingClientRect();
-    const dateElement = document.querySelector(`.fc-day[data-date="${date}"]`);
-    if (dateElement) {
-        const dateRect = dateElement.getBoundingClientRect();
-        popup.style.left = `${dateRect.left + window.pageXOffset}px`;
-        popup.style.top = `${dateRect.bottom + window.pageYOffset}px`;
-    } else {
-        // Fallback positioning if date element isn't found
-        popup.style.left = `${calendarRect.left + window.pageXOffset + 10}px`;
-        popup.style.top = `${calendarRect.top + window.pageYOffset + 10}px`;
-    }
-
-    const filteredTasks = tasks.filter(task => task.date === date);
-    if (filteredTasks.length > 0) {
-        popup.innerHTML = `<h3>Tasks for ${date}</h3>`;
-        filteredTasks.forEach(task => {
-            popup.innerHTML += `
-                <p>${task.name} - ${task.isDone ? 'Completed' : 'Pending'} 
-                ${task.link ? `<a href="${task.link}" target="_blank">Link</a>` : ''}
-                <button onclick="toggleTaskCompletion('${task.name}', '${date}')">${task.isDone ? 'Undo' : 'Complete'}</button></p>
-            `;
-        });
-    } else {
-        popup.innerHTML = `<p>No tasks for ${date}</p>`;
-    }
-    
-    // Close popup when clicking outside
-    document.addEventListener('click', function closePopup(e) {
-        if (!popup.contains(e.target) && e.target !== document.querySelector('#calendar')) {
-            popup.style.display = 'none';
-            document.removeEventListener('click', closePopup);
-        }
-    });
-}
-
-function toggleTaskCompletion(taskName, taskDate) {
-    const taskIndex = tasks.findIndex(task => task.name === taskName && task.date === taskDate);
-    if (taskIndex !== -1) {
-        tasks[taskIndex].isDone = !tasks[taskIndex].isDone;
-        localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
-        updateTaskGraph();
-        updateTaskTable(taskName, tasks[taskIndex].isDone);
-        showDateDetails(taskDate); // Refresh popup content
-    }
-}
-
-updateTaskGraph();</script>
+</script>
 </body>
 </html>
