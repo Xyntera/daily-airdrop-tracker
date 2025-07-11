@@ -1,6 +1,4 @@
 Welcome to Daily Airdrop Tracker!
-![Uploading image (5).jpg…]()
-
 Your go-to tool for managing and tracking daily crypto airdrops and tasks! Here, you can:
 
 Track Daily Airdrops: Keep up with new airdrop opportunities every day.
