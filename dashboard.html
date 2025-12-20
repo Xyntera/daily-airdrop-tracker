@@ -29,7 +29,7 @@
                         radial-gradient(circle at 80% 10%, rgba(90, 121, 255, 0.07), transparent 30%),
                         var(--bg);
             color: var(--text);
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -373,6 +373,22 @@
             background: rgba(20, 33, 50, 0.5);
         }
 
+        .heading-tight {
+            margin: 0;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         @media (max-width: 1024px) {
             .app-shell {
                 grid-template-columns: 1fr;
@@ -417,9 +433,9 @@
     </style>
 </head>
 <body>
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false">☰</button>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open navigation" aria-controls="mainSidebar" aria-expanded="false">Menu</button>
     <div class="app-shell">
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="mainSidebar">
             <div class="brand">
                 <div>
                     <p class="eyebrow">Daily Airdrop Tracker</p>
@@ -510,6 +526,7 @@
                 </div>
                 <div class="table-wrapper">
                     <table id="airdropTable">
+                        <caption class="visually-hidden">Daily airdrop tasks</caption>
                         <thead>
                             <tr>
                                 <th scope="col">Task Name</th>
@@ -525,7 +542,7 @@
 
             <section class="activity panel" aria-label="Recent updates">
                 <div class="panel__header">
-                    <h3 style="margin: 0;">Recent activity</h3>
+                    <h3 class="heading-tight">Recent activity</h3>
                     <span class="badge">Auto-refresh daily</span>
                 </div>
                 <ul id="activityFeed" aria-live="polite">
@@ -535,6 +552,10 @@
     </div>
 
     <script>
+        // UI and data limits
+        const ACTIVITY_FEED_LIMIT = 5;
+        const FALLBACK_TASK_NAME = 'Untitled task';
+        const MAX_URL_LENGTH = 2048;
         const tableBody = document.querySelector('#airdropTable tbody');
         const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
         const lastResetDate = localStorage.getItem('lastResetDate');
@@ -565,15 +586,31 @@
             const entry = document.createElement('li');
             entry.textContent = `${message} · ${formatTime()}`;
             activityFeed.prepend(entry);
-            if (activityFeed.children.length > 5) {
-                activityFeed.removeChild(activityFeed.lastChild);
+            if (activityFeed.children.length > ACTIVITY_FEED_LIMIT) {
+                const last = activityFeed.lastElementChild;
+                if (last) last.remove();
+            }
+        }
+
+        function safeUrl(value) {
+            if (!value || value.length > MAX_URL_LENGTH) return null;
+            const lower = value.trim().toLowerCase();
+            if (lower.startsWith('javascript:') || lower.startsWith('data:')) return null;
+            try {
+                const url = new URL(value);
+                const allowedProtocols = ['http:', 'https:'];
+                if (!allowedProtocols.includes(url.protocol) || !url.hostname) return null;
+                return url.toString();
+            } catch (error) {
+                if (error instanceof TypeError) return null;
+                return null;
             }
         }
 
         function updateStats() {
             const total = tasks.length;
             const completed = tasks.filter(task => task.isDone).length;
-            const pending = Math.max(total - completed, 0);
+            const pending = total - completed;
             statTotal.textContent = total;
             statComplete.textContent = completed;
             statPending.textContent = pending;
@@ -591,7 +628,11 @@
             tableBody.innerHTML = '';
             if (!list.length) {
                 const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="3" class="muted">No tasks yet. Add your first task to get started.</td>';
+                const cell = document.createElement('td');
+                cell.colSpan = 3;
+                cell.className = 'muted';
+                cell.textContent = 'No tasks yet. Add your first task to get started.';
+                row.appendChild(cell);
                 tableBody.appendChild(row);
                 return;
             }
@@ -599,15 +640,35 @@
             list.forEach(task => {
                 const row = document.createElement('tr');
                 if (task.isDone) row.classList.add('is-done');
-                const linkCell = task.link
-                    ? `<a href="${task.link}" target="_blank" rel="noopener">Visit link</a>`
-                    : '<span class="muted">No link</span>';
-                row.innerHTML = `
-                    <td>${task.name}</td>
-                    <td>${linkCell}</td>
-                    <td><button class="pill-btn" type="button" ${task.isDone ? 'disabled' : ''}>${task.isDone ? 'Completed' : 'Mark done'}</button></td>
-                `;
-                row.querySelector('button').addEventListener('click', () => markDone(task.name));
+                const nameCell = document.createElement('td');
+                nameCell.textContent = task.name || FALLBACK_TASK_NAME;
+
+                const linkCell = document.createElement('td');
+                const safeLink = safeUrl(task.link);
+                if (safeLink) {
+                    const anchor = document.createElement('a');
+                    anchor.href = safeLink;
+                    anchor.target = '_blank';
+                    anchor.rel = 'noopener noreferrer';
+                    anchor.textContent = 'Visit link';
+                    linkCell.appendChild(anchor);
+                } else {
+                    const muted = document.createElement('span');
+                    muted.className = 'muted';
+                    muted.textContent = 'No link';
+                    linkCell.appendChild(muted);
+                }
+
+                const actionCell = document.createElement('td');
+                const btn = document.createElement('button');
+                btn.className = 'pill-btn';
+                btn.type = 'button';
+                btn.disabled = task.isDone;
+                btn.textContent = task.isDone ? 'Completed' : 'Mark done';
+                btn.addEventListener('click', () => markDone(task.name));
+                actionCell.appendChild(btn);
+
+                row.append(nameCell, linkCell, actionCell);
                 tableBody.appendChild(row);
             });
         }
@@ -634,7 +695,10 @@
         }
 
         document.querySelectorAll('.accordion__trigger').forEach(trigger => {
-            const panel = document.getElementById(trigger.getAttribute('aria-controls'));
+            const controlId = trigger.getAttribute('aria-controls');
+            if (!controlId) return;
+            const panel = document.getElementById(controlId);
+            if (!panel) return;
             trigger.addEventListener('click', () => {
                 const isExpanded = trigger.getAttribute('aria-expanded') === 'true';
                 trigger.setAttribute('aria-expanded', String(!isExpanded));
@@ -655,19 +719,22 @@
         document.getElementById('resetStatus').addEventListener('click', resetStatuses);
 
         const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
+        const sidebar = document.getElementById('mainSidebar');
         sidebarToggle.addEventListener('click', () => {
             const open = sidebar.classList.toggle('is-open');
             sidebarToggle.setAttribute('aria-expanded', String(open));
-            sidebarToggle.textContent = open ? 'Close' : '☰';
+            sidebarToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
         });
 
-        document.getElementById('todayLabel').textContent = new Intl.DateTimeFormat('en-US', {
-            weekday: 'long',
-            month: 'short',
-            day: 'numeric'
-        }).format(new Date());
+        function setTodayLabel() {
+            const labelToday = new Date();
+            const formatter = typeof Intl !== 'undefined'
+                ? new Intl.DateTimeFormat(navigator.language || 'en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+                : null;
+            document.getElementById('todayLabel').textContent = formatter ? formatter.format(labelToday) : labelToday.toDateString();
+        }
 
+        setTodayLabel();
         renderTasks(getFilteredTasks());
         updateStats();
         updateTimestamp('Loaded');
