@@ -6,218 +6,738 @@
     <title>Dashboard - Daily Airdrop Tracker</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <style>
-        /* Body and General Styles */
+        :root {
+            --bg: #0b0e14;
+            --panel: #0f1622;
+            --panel-accent: #142132;
+            --border: #1f2b3c;
+            --text: #e9eef7;
+            --muted: #8da2c0;
+            --primary: #65d46e;
+            --primary-strong: #42b35f;
+            --warning: #f5c451;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #121212;
-            color: white;
-            font-family: 'Courier New', monospace;
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 20%, rgba(101, 212, 110, 0.06), transparent 35%),
+                        radial-gradient(circle at 80% 10%, rgba(90, 121, 255, 0.07), transparent 30%),
+                        var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Responsive Navigation */
-        nav ul {
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 290px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 16px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(15, 22, 34, 0.92);
+            color: var(--text);
+            z-index: 6;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            padding: 32px 24px;
+            background: linear-gradient(180deg, #0f1825 0%, #0b0e14 100%);
+            border-right: 1px solid var(--border);
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 5;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
             justify-content: space-between;
-            padding: 10px;
+            gap: 12px;
         }
 
-        nav ul li {
-            margin: 10px;
+        .brand h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            letter-spacing: 0.3px;
         }
 
-        /* Dashboard Title with Glass Blocker Animation */
-        .dashboard-title {
-            position: relative;
-            font-family: 'Poppins', sans-serif;
-            font-size: 3.5rem;
+        .eyebrow {
             text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 0.15em;
-            color: transparent;
-            text-align: center;
-            margin: 30px 0;
-            -webkit-text-stroke: 1px #ffffff;
+            font-size: 0.75rem;
+            letter-spacing: 0.22em;
+            color: var(--muted);
+            margin: 0 0 4px;
+        }
+
+        .pill {
+            background: rgba(101, 212, 110, 0.12);
+            color: var(--primary);
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(101, 212, 110, 0.5);
+            font-size: 0.78rem;
+        }
+
+        .sidebar-nav {
+            display: grid;
+            gap: 6px;
+        }
+
+        .sidebar-nav a {
+            padding: 12px 14px;
+            border-radius: 12px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid transparent;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+        }
+
+        .sidebar-nav a.active,
+        .sidebar-nav a:hover {
+            border-color: var(--border);
+            background: rgba(31, 43, 60, 0.35);
+            transform: translateX(2px);
+        }
+
+        .sidebar-block {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px dashed var(--border);
+            background: rgba(20, 33, 50, 0.45);
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .accordion {
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(20, 33, 50, 0.4);
             overflow: hidden;
         }
 
-        .dashboard-title::before,
-        .dashboard-title::after {
-            content: "DASHBOARD";
-            position: absolute;
-            top: 0;
-            left: 0;
+        .accordion__trigger {
             width: 100%;
-            height: 100%;
-            color: #00ff00;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 10%, rgba(0, 255, 0, 0.3) 30%, rgba(0, 0, 0, 0) 70%);
-            clip-path: polygon(0% 0%, 20% 0%, 15% 100%, 0% 100%);
-            animation: glassBlocker 2s linear infinite;
-            opacity: 0.7;
-        }
-
-        .dashboard-title::after {
-            background: linear-gradient(90deg, rgba(0, 0, 255, 0.4) 10%, rgba(255, 0, 255, 0.5) 30%, rgba(0, 0, 0, 0) 70%);
-            clip-path: polygon(80% 0%, 100% 0%, 100% 100%, 85% 100%);
-            animation-delay: 1s;
-        }
-
-        @keyframes glassBlocker {
-            0% {
-                transform: translateX(-100%);
-            }
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        /* Table Styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #444;
-            color: white;
-        }
-
-        th {
-            background-color: #333;
-        }
-
-        /* Button Styles */
-        .button {
-            padding: 10px 20px;
-            background-color: transparent;
-            color: #00ff00;
-            border: 2px solid #00ff00;
-            border-radius: 8px;
+            background: none;
+            border: 0;
+            color: var(--text);
+            font-weight: 600;
+            padding: 12px 14px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        }
+
+        .accordion__trigger span {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .accordion__panel {
+            padding: 0 14px 14px;
+            display: grid;
+            gap: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(101, 212, 110, 0.12);
+            color: var(--text);
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+
+        .chip.ghost {
+            background: rgba(31, 43, 60, 0.4);
+        }
+
+        .chip:hover {
+            background: rgba(101, 212, 110, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .content {
+            padding: 36px clamp(18px, 3vw, 40px);
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .page-header h2 {
+            margin: 4px 0;
+            font-size: 2rem;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(101, 212, 110, 0.6);
+            background: linear-gradient(90deg, rgba(101, 212, 110, 0.15), rgba(101, 212, 110, 0.05));
+            color: var(--text);
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
 
         .button:hover {
-            background-color: #00ff00;
-            color: #121212;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 32px rgba(101, 212, 110, 0.22);
         }
 
-        /* Responsive Layout */
-        @media (max-width: 768px) {
-            .dashboard-title {
-                font-size: 2.5rem;
+        .button.ghost {
+            background: rgba(20, 33, 50, 0.5);
+            border-color: var(--border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            background: linear-gradient(145deg, rgba(20, 33, 50, 0.8), rgba(20, 33, 50, 0.6));
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+        }
+
+        .stat-card h3 {
+            margin: 6px 0 0;
+            font-size: 1.8rem;
+        }
+
+        .panel {
+            background: rgba(20, 33, 50, 0.6);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+            overflow: hidden;
+        }
+
+        .panel__header {
+            padding: 18px 20px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .panel-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            color: var(--muted);
+        }
+
+        .badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(31, 43, 60, 0.65);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        th {
+            background: rgba(15, 22, 34, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr:hover td {
+            background: rgba(31, 43, 60, 0.22);
+        }
+
+        .pill-btn {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(101, 212, 110, 0.8);
+            background: rgba(101, 212, 110, 0.12);
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .pill-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .is-done td:first-child {
+            text-decoration: line-through;
+            color: var(--muted);
+        }
+
+        .activity {
+            padding: 12px 20px 18px;
+        }
+
+        .activity ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .activity li {
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(20, 33, 50, 0.5);
+        }
+
+        .heading-tight {
+            margin: 0;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 1024px) {
+            .app-shell {
+                grid-template-columns: 1fr;
             }
 
-            nav ul {
+            .sidebar-toggle {
+                display: inline-flex;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -320px;
+                width: 280px;
+                height: calc(100vh - 24px);
+                margin: 12px;
+                border-radius: 18px;
+                transition: left 0.28s ease;
+                box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+            }
+
+            .sidebar.is-open {
+                left: 0;
+            }
+
+            .content {
+                padding-top: 70px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .panel__header,
+            .actions,
+            .page-header {
                 flex-direction: column;
-                align-items: center;
+                align-items: flex-start;
             }
 
             table {
-                font-size: 0.9rem;
-            }
-
-            th, td {
-                padding: 8px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .dashboard-title {
-                font-size: 2rem;
-            }
-
-            table {
-                font-size: 0.8rem;
-            }
-
-            th, td {
-                padding: 5px;
+                min-width: 540px;
             }
         }
     </style>
 </head>
 <body>
-    <nav>
-        <ul>
-            <li><strong>Daily Airdrop Tracker</strong></li>
-        </ul>
-     <ul>
-  <li><a href="/home" class="button">Home</a></li>
-  <li><a href="/features" class="button">Features</a></li>
-  <li><a href="/about" class="button">About</a></li>
-  <li><a href="/contact" class="button">Contact</a></li>
-</ul>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open navigation" aria-controls="mainSidebar" aria-expanded="false">Menu</button>
+    <div class="app-shell">
+        <aside class="sidebar" id="mainSidebar">
+            <div class="brand">
+                <div>
+                    <p class="eyebrow">Daily Airdrop Tracker</p>
+                    <h1>Dashboard</h1>
+                </div>
+                <span class="pill">Live</span>
+            </div>
+            <nav class="sidebar-nav" aria-label="Primary navigation">
+                <a href="/home">Home</a>
+                <a href="/features">Features</a>
+                <a href="/dashboard" class="active">Dashboard</a>
+                <a href="/add-task-list">Add Task</a>
+                <a href="/about">About</a>
+                <a href="/contact">Contact</a>
+            </nav>
+            <div class="sidebar-block">
+                Quickly review your airdrop checklist, mark items done, and keep everything synced day-to-day.
+            </div>
+            <section class="accordion">
+                <button class="accordion__trigger" aria-expanded="false" aria-controls="filtersPanel">
+                    Filters
+                    <span>Show only what you need</span>
+                </button>
+                <div class="accordion__panel" id="filtersPanel" hidden>
+                    <label class="switch">
+                        <input type="checkbox" id="hideCompleted">
+                        <span>Hide completed</span>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="linkOnly">
+                        <span>Only tasks with links</span>
+                    </label>
+                </div>
+            </section>
+            <section class="accordion">
+                <button class="accordion__trigger" aria-expanded="false" aria-controls="shortcutsPanel">
+                    Quick actions
+                    <span>Speed up your workflow</span>
+                </button>
+                <div class="accordion__panel" id="shortcutsPanel" hidden>
+                    <a class="chip" href="/add-task-list">+ Add new task</a>
+                    <button class="chip" type="button" id="refreshBtn">↻ Refresh data</button>
+                    <button class="chip ghost" type="button" id="resetStatus">Reset statuses</button>
+                </div>
+            </section>
+        </aside>
+        <main class="content" id="mainContent">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow" id="todayLabel"></p>
+                    <h2>Task Overview</h2>
+                    <p class="muted">Manage your daily airdrops in one glance with live progress.</p>
+                </div>
+                <div class="actions">
+                    <a class="button" href="/add-task-list">Add Task</a>
+                    <a class="button ghost" href="/home">Back home</a>
+                </div>
+            </header>
 
-    </nav>
+            <section class="stats-grid" aria-label="Task statistics">
+                <article class="stat-card">
+                    <p class="muted">Total Tasks</p>
+                    <h3 id="statTotal">0</h3>
+                </article>
+                <article class="stat-card">
+                    <p class="muted">Completed</p>
+                    <h3 id="statComplete">0</h3>
+                </article>
+                <article class="stat-card">
+                    <p class="muted">Pending</p>
+                    <h3 id="statPending">0</h3>
+                </article>
+                <article class="stat-card">
+                    <p class="muted">Last Updated</p>
+                    <h3 id="lastUpdated">—</h3>
+                </article>
+            </section>
 
-    <header>
-        <h1 class="dashboard-title">DASHBOARD</h1>
-    </header>
+            <section class="panel" aria-labelledby="taskTableHeading">
+                <div class="panel__header">
+                    <div>
+                        <p class="eyebrow">Task queue</p>
+                        <h3 id="taskTableHeading">Daily airdrops</h3>
+                    </div>
+                    <div class="panel-meta">
+                        <span class="badge" id="liveIndicator">Live sync</span>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="airdropTable">
+                        <caption class="visually-hidden">Daily airdrop tasks</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Task Name</th>
+                                <th scope="col">Link</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-    <main class="container">
-        <table id="airdropTable">
-            <thead>
-                <tr>
-                    <th>Task Name</th>
-                    <th>Link</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Tasks dynamically added via JavaScript -->
-            </tbody>
-        </table>
-        <a href="/add-task-list" class="button">Add New Task</a>
-    </main>
+            <section class="activity panel" aria-label="Recent updates">
+                <div class="panel__header">
+                    <h3 class="heading-tight">Recent activity</h3>
+                    <span class="badge">Auto-refresh daily</span>
+                </div>
+                <ul id="activityFeed" aria-live="polite">
+                </ul>
+            </section>
+        </main>
+    </div>
 
-    <footer class="container">
-        <small><a href="#"> </a>  <a href="#"> </a></small>
-    </footer>
+    <script>
+        // UI and data limits
+        const ACTIVITY_FEED_LIMIT = 5;
+        const FALLBACK_TASK_NAME = 'Untitled task';
+        const MAX_URL_LENGTH = 2048;
+        const tableBody = document.querySelector('#airdropTable tbody');
+        const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
+        const lastResetDate = localStorage.getItem('lastResetDate');
+        const today = new Date().toISOString().split('T')[0];
+        const hideCompleted = document.getElementById('hideCompleted');
+        const linkOnly = document.getElementById('linkOnly');
+        const statTotal = document.getElementById('statTotal');
+        const statComplete = document.getElementById('statComplete');
+        const statPending = document.getElementById('statPending');
+        const lastUpdated = document.getElementById('lastUpdated');
+        const activityFeed = document.getElementById('activityFeed');
 
-  <script>
-    const tableBody = document.querySelector('#airdropTable tbody');
-    const tasks = JSON.parse(localStorage.getItem('dailyAirdrops')) || [];
-    const lastResetDate = localStorage.getItem('lastResetDate');
-    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
-    // Check if the date has changed since the last reset
-    if (lastResetDate !== today) {
-        tasks.forEach(task => (task.isDone = false)); // Reset all tasks
-        localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
-        localStorage.setItem('lastResetDate', today); // Update the reset date
-    }
-
-    // Populate the table
-    tasks.forEach(({ name, link, isDone }) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${name}</td>
-            <td>${link ? `<a href="${link}" target="_blank">Visit Link</a>` : 'No Link'}</td>
-            <td><button onclick="markDone(this)" ${isDone ? 'disabled' : ''} style="${isDone ? 'text-decoration: line-through;' : ''}">Done</button></td>
-        `;
-        tableBody.appendChild(row);
-    });
-
-    // Mark a task as done
-    function markDone(button) {
-        const row = button.closest('tr');
-        const taskName = row.querySelector('td').textContent;
-
-        // Update the task status in localStorage
-        const taskIndex = tasks.findIndex(task => task.name === taskName);
-        if (taskIndex !== -1) {
-            tasks[taskIndex].isDone = true;
+        if (lastResetDate !== today) {
+            tasks.forEach(task => (task.isDone = false));
             localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+            localStorage.setItem('lastResetDate', today);
         }
 
-        // Mark the task as done on the UI
-        row.style.textDecoration = 'line-through';
-        button.disabled = true;
-    }
-</script>
+        function formatTime() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
 
+        function updateTimestamp(label) {
+            lastUpdated.textContent = `${label || 'Updated'} · ${formatTime()}`;
+        }
+
+        function pushActivity(message) {
+            const entry = document.createElement('li');
+            entry.textContent = `${message} · ${formatTime()}`;
+            activityFeed.prepend(entry);
+            if (activityFeed.children.length > ACTIVITY_FEED_LIMIT) {
+                const last = activityFeed.lastElementChild;
+                if (last) last.remove();
+            }
+        }
+
+        function safeUrl(value) {
+            if (!value || value.length > MAX_URL_LENGTH) return null;
+            const lower = value.trim().toLowerCase();
+            if (lower.startsWith('javascript:') || lower.startsWith('data:')) return null;
+            try {
+                const url = new URL(value);
+                const allowedProtocols = ['http:', 'https:'];
+                if (!allowedProtocols.includes(url.protocol) || !url.hostname) return null;
+                return url.toString();
+            } catch (error) {
+                if (error instanceof TypeError) return null;
+                return null;
+            }
+        }
+
+        function updateStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(task => task.isDone).length;
+            const pending = total - completed;
+            statTotal.textContent = total;
+            statComplete.textContent = completed;
+            statPending.textContent = pending;
+        }
+
+        function getFilteredTasks() {
+            return tasks.filter(task => {
+                if (hideCompleted.checked && task.isDone) return false;
+                if (linkOnly.checked && !task.link) return false;
+                return true;
+            });
+        }
+
+        function renderTasks(list = tasks) {
+            tableBody.innerHTML = '';
+            if (!list.length) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 3;
+                cell.className = 'muted';
+                cell.textContent = 'No tasks yet. Add your first task to get started.';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+                return;
+            }
+
+            list.forEach(task => {
+                const row = document.createElement('tr');
+                if (task.isDone) row.classList.add('is-done');
+                const nameCell = document.createElement('td');
+                nameCell.textContent = task.name || FALLBACK_TASK_NAME;
+
+                const linkCell = document.createElement('td');
+                const safeLink = safeUrl(task.link);
+                if (safeLink) {
+                    const anchor = document.createElement('a');
+                    anchor.href = safeLink;
+                    anchor.target = '_blank';
+                    anchor.rel = 'noopener noreferrer';
+                    anchor.textContent = 'Visit link';
+                    linkCell.appendChild(anchor);
+                } else {
+                    const muted = document.createElement('span');
+                    muted.className = 'muted';
+                    muted.textContent = 'No link';
+                    linkCell.appendChild(muted);
+                }
+
+                const actionCell = document.createElement('td');
+                const btn = document.createElement('button');
+                btn.className = 'pill-btn';
+                btn.type = 'button';
+                btn.disabled = task.isDone;
+                btn.textContent = task.isDone ? 'Completed' : 'Mark done';
+                btn.addEventListener('click', () => markDone(task.name));
+                actionCell.appendChild(btn);
+
+                row.append(nameCell, linkCell, actionCell);
+                tableBody.appendChild(row);
+            });
+        }
+
+        function markDone(taskName) {
+            const taskIndex = tasks.findIndex(task => task.name === taskName);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].isDone = true;
+                localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+                renderTasks(getFilteredTasks());
+                updateStats();
+                updateTimestamp('Marked done');
+                pushActivity(`Completed "${taskName}"`);
+            }
+        }
+
+        function resetStatuses() {
+            tasks.forEach(task => (task.isDone = false));
+            localStorage.setItem('dailyAirdrops', JSON.stringify(tasks));
+            renderTasks(getFilteredTasks());
+            updateStats();
+            updateTimestamp('Reset for today');
+            pushActivity('Reset all tasks');
+        }
+
+        document.querySelectorAll('.accordion__trigger').forEach(trigger => {
+            const controlId = trigger.getAttribute('aria-controls');
+            if (!controlId) return;
+            const panel = document.getElementById(controlId);
+            if (!panel) return;
+            trigger.addEventListener('click', () => {
+                const isExpanded = trigger.getAttribute('aria-expanded') === 'true';
+                trigger.setAttribute('aria-expanded', String(!isExpanded));
+                panel.hidden = isExpanded;
+            });
+        });
+
+        hideCompleted.addEventListener('change', () => renderTasks(getFilteredTasks()));
+        linkOnly.addEventListener('change', () => renderTasks(getFilteredTasks()));
+
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            renderTasks(getFilteredTasks());
+            updateStats();
+            updateTimestamp('Refreshed');
+            pushActivity('Data refreshed');
+        });
+
+        document.getElementById('resetStatus').addEventListener('click', resetStatuses);
+
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('mainSidebar');
+        sidebarToggle.addEventListener('click', () => {
+            const open = sidebar.classList.toggle('is-open');
+            sidebarToggle.setAttribute('aria-expanded', String(open));
+            sidebarToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+        });
+
+        function setTodayLabel() {
+            const labelToday = new Date();
+            const formatter = typeof Intl !== 'undefined'
+                ? new Intl.DateTimeFormat(navigator.language || 'en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+                : null;
+            document.getElementById('todayLabel').textContent = formatter ? formatter.format(labelToday) : labelToday.toDateString();
+        }
+
+        setTodayLabel();
+        renderTasks(getFilteredTasks());
+        updateStats();
+        updateTimestamp('Loaded');
+    </script>
 </body>
 </html>
